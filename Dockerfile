@@ -1,11 +1,17 @@
 # Build the manager binary
 FROM golang:1.10.3 as builder
 
+ENV DEP_VERSION 0.5.4
+
 # Copy in the go src
 WORKDIR /go/src/sigs.k8s.io/aws-alb-ingress-controller
 COPY pkg/    pkg/
 COPY cmd/    cmd/
-COPY vendor/ vendor/
+
+# Get dependencies
+COPY Gopkg.toml Gopkg.lock ./
+RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 && chmod +x /usr/local/bin/dep
+RUN /usr/local/bin/dep ensure -vendor-only
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager sigs.k8s.io/aws-alb-ingress-controller/cmd/manager
